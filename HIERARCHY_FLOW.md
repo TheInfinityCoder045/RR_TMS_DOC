@@ -158,11 +158,6 @@ Access Level:
 - ❌ Cannot create/modify roles
 - ❌ Cannot access SuperAdmin features
 
-**Scope Restriction:**
-```javascript
-// ClientAdmin can only see data where:
-data.client_id === currentUser.client_id
-```
 
 ---
 
@@ -192,11 +187,7 @@ Access Level:
 - ❌ Cannot access other branches (unless assigned)
 - ❌ Cannot create projects
 
-**Scope Restriction:**
-```javascript
-// BranchManager can only see data where:
-data.store_id IN currentUser.assigned_store_ids
-```
+
 
 ---
 
@@ -224,11 +215,6 @@ Access Level:
 - ❌ Cannot access other departments
 - ❌ Cannot create branches or projects
 
-**Scope Restriction:**
-```javascript
-// DepartmentHead can only see data where:
-data.department_id IN currentUser.assigned_department_ids
-```
 
 ---
 
@@ -290,12 +276,6 @@ Access Level:
 - ❌ Cannot assign tasks to others
 - ❌ Cannot access unassigned data
 
-**Scope Restriction:**
-```javascript
-// User can only see data where:
-data.assigned_to === currentUser.id 
-OR data.created_by === currentUser.id
-```
 
 ---
 
@@ -418,60 +398,6 @@ When **SuperAdmin creates a user**, they must:
      - Branch: [Mumbai Store] (ID: 5)  ← Multi-select if BranchManager
      - Department: [Sales] (ID: 12)     ← Multi-select if DepartmentHead
    ```
-
-### 5.2 Scope-Based Data Filtering
-
-#### Database Schema:
-```sql
-users table:
-  - id
-  - name
-  - email
-  - role_id        → References roles table
-  - client_id      → REQUIRED for all roles except SuperAdmin
-  - store_id       → JSON array [1,2,3] for multiple branches
-  - department_id  → JSON array [1,2,3] for multiple departments
-```
-
-#### Access Logic:
-```javascript
-// SuperAdmin
-if (user.role === 'SuperAdmin') {
-  // Access ALL data across all clients
-  return query.all();
-}
-
-// ClientAdmin
-if (user.role === 'ClientAdmin') {
-  // Access data for their client only
-  return query.where('client_id', '=', user.client_id);
-}
-
-// BranchManager
-if (user.role === 'BranchManager') {
-  // Access data for assigned branches only
-  const branchIds = JSON.parse(user.store_id); // [1, 2, 5]
-  return query.whereIn('store_id', branchIds)
-              .where('client_id', '=', user.client_id);
-}
-
-// DepartmentHead
-if (user.role === 'DepartmentHead') {
-  // Access data for assigned departments only
-  const deptIds = JSON.parse(user.department_id); // [1, 2]
-  return query.whereIn('department_id', deptIds)
-              .where('client_id', '=', user.client_id);
-}
-
-// User / Anchor
-if (user.role === 'User' || user.role === 'Anchor') {
-  // Access assigned tasks/tickets only
-  return query.where(function() {
-    this.where('assigned_to', '=', user.id)
-        .orWhere('created_by', '=', user.id);
-  });
-}
-```
 
 ---
 

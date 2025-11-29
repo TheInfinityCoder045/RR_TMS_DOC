@@ -137,21 +137,6 @@ CREATED → ASSIGNED → ACKNOWLEDGED → IN_PROGRESS → COMPLETED → CLOSED
 | **Store** | All users in branch/store | Auto-assigns all store users | "Assign to Mumbai Branch" |
 | **Multiple/Mixed** | Combination of above | Auto-assigns from all sources | "Sales Dept + John + Delhi Store" |
 
-**Auto-Assignment Logic:**
-```javascript
-IF assignment_type === 'department':
-  users = SELECT * FROM users WHERE department_id IN (selected_departments)
-  CREATE task_assignment FOR EACH user
-
-IF assignment_type === 'store':
-  users = SELECT * FROM users WHERE store_id IN (selected_stores)
-  CREATE task_assignment FOR EACH user
-
-IF assignment_type === 'multiple':
-  users = UNION of (individual_users, department_users, store_users)
-  REMOVE duplicates
-  CREATE task_assignment FOR EACH unique user
-```
 
 ---
 
@@ -250,39 +235,12 @@ Link to Tasks/Tickets
 | Signature | Digital signature | Required capture | VARCHAR (path) |
 | Location | GPS coordinates | Lat/long validation | JSON |
 
-### 4.3 Dynamic Table Creation
 
-**When Form Activated:**
-```sql
--- System automatically generates:
-CREATE TABLE `form_data_{form_slug}` (
-  `id` INT PRIMARY KEY AUTO_INCREMENT,
-  `submission_id` INT NOT NULL,
-  `task_id` INT NULL,
-  `ticket_id` INT NULL,
-  `submitted_by` INT NULL,
-  `submitted_at` TIMESTAMP,
-  
-  -- Dynamic columns for each form field:
-  `field_1_full_name` VARCHAR(255),
-  `field_2_email` VARCHAR(255),
-  `field_3_rating` INT,
-  `field_4_comments` TEXT,
-  `field_5_attachments` JSON,
-  ...
-  
-  INDEX(submission_id),
-  FOREIGN KEY (submission_id) REFERENCES form_submissions(id)
-);
 ```
 
-**Advantages:**
-- Fast querying (indexed columns)
-- Type-safe data storage
-- Easy reporting/analytics
-- SQL-compatible
 
-### 4.4 Public Link Features
+
+### 4.3 Public Link Features
 
 **Public Link Capabilities:**
 - ✅ Anonymous submissions (no login)
@@ -330,7 +288,6 @@ Cron Job Activated → Auto-Generate Tasks Daily
 
 ### 5.3 Automated Task Generation (Cron Job)
 
-**File:** `c:\xampp1\htdocs\rr_tms_api\cron\generate_recurring_tasks.php`
 
 **Execution:**
 ```yaml

@@ -118,7 +118,7 @@ Access Level:
   - View all audit logs
 ```
 
-**Capabilities:**
+**Capabilities(permission based):**
 - ✅ Create clients (organizations)
 - ✅ Create branches for any client
 - ✅ Create departments in any branch
@@ -147,8 +147,8 @@ Access Level:
   - Can assign tasks to client users
 ```
 
-**Capabilities:**
-- ✅ Create branches within their client
+**Capabilities(permission based):**
+- ✅ Create branches within their client(permission based)
 - ✅ Create departments in client branches
 - ✅ Create users within their client (with scope restrictions)
 - ✅ Create projects for their client
@@ -176,7 +176,7 @@ Access Level:
   - Can assign tasks to branch users
 ```
 
-**Capabilities:**
+**Capabilities(permission based):**
 - ✅ Manage assigned branch(es)
 - ✅ Create departments in their branch
 - ✅ Create users in their branch
@@ -206,7 +206,7 @@ Access Level:
   - Can assign tasks to department users
 ```
 
-**Capabilities:**
+**Capabilities(permission based):**
 - ✅ Manage users in their department(s)
 - ✅ View/assign tasks for their department
 - ✅ Create tickets for their department
@@ -233,7 +233,7 @@ Access Level:
   - Enhanced task visibility
 ```
 
-**Capabilities:**
+**Capabilities(permission based):**
 - ✅ View/manage tickets across departments (within client)
 - ✅ Resolve tickets assigned to them
 - ✅ Escalate tickets
@@ -263,7 +263,7 @@ Access Level:
   - Can view own data
 ```
 
-**Capabilities:**
+**Capabilities(permission based):**
 - ✅ View tasks assigned to them
 - ✅ Acknowledge tasks
 - ✅ Update task progress

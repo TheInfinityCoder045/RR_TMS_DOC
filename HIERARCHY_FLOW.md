@@ -316,64 +316,104 @@ The system has **10+ dashboard tabs** that can be controlled:
 | 12 | `settings` | System Settings | Configuration |
 | 13 | `roles` | Role Management | Role & permission config |
 
-### 4.3 Permission Matrix Example
+### 4.3 Permission Matrix Example (WITH Inheritance)
 
-Here's how permissions are assigned to roles:
+Here's how permissions work with hierarchical inheritance:
 
-#### SuperAdmin Permission Matrix:
+#### User Base Permissions (Level 10):
 ```yaml
-SuperAdmin (Role ID: 1):
-  overview:     [R, W, E, D, A, X, S, M]  # Full access
-  clients:      [R, W, E, D, X, M]        # Full client control
-  branches:     [R, W, E, D, X, M]        # Full branch control
-  departments:  [R, W, E, D, X, M]        # Full department control
-  users:        [R, W, E, D, M]           # Full user control
-  projects:     [R, W, E, D, X, M]        # Full project control
-  tasks:        [R, W, E, D, A, X, S, M]  # Full task control
-  tickets:      [R, W, E, D, A, X, S, M]  # Full ticket control
-  forms:        [R, W, E, D, X, M]        # Full form control
-  reports:      [R, X]                    # View & export reports
-  audit:        [R, X]                    # View & export audit logs
-  settings:     [R, W]                    # Configure system settings
-  roles:        [R, W, E, D]              # Manage roles
-```
-
-#### ClientAdmin Permission Matrix:
-```yaml
-ClientAdmin (Role ID: 2):
-  overview:     [R, X]                    # View client dashboard
-  clients:      [R]                       # View own client only
-  branches:     [R, W, E, D]              # Manage client branches
-  departments:  [R, W, E, D]              # Manage departments
-  users:        [R, W, E]                 # Create/edit users (within client)
-  projects:     [R, W, E, D, X]           # Full project control (client scope)
-  tasks:        [R, W, E, D, S, X]        # Manage & assign tasks
-  tickets:      [R, W, E, X]              # View & update tickets
-  forms:        [R, W, E, X]              # Create forms
-  reports:      [R, X]                    # View client reports
-  audit:        [R]                       # View client audit logs
-  settings:     [R]                       # View settings only
-  roles:        []                        # No role management access
-```
-
-#### User Permission Matrix:
-```yaml
-User (Role ID: 6):
-  overview:     [R]                       # View personal dashboard
-  clients:      []                        # No access
-  branches:     []                        # No access
-  departments:  []                        # No access
-  users:        []                        # No access
-  projects:     [R]                       # View assigned projects
+User (Role ID: 6) - BASE PERMISSIONS:
   tasks:        [R, E]                    # View & update assigned tasks
   tickets:      [R, W, E]                 # Create & update tickets
-  forms:        [W]                       # Submit forms
-  reports:      []                        # No access
-  audit:        []                        # No access
-  settings:     []                        # No access
-  roles:        []                        # No access
+  
+  All other tabs: []                      # No access
 ```
 
+#### Anchor Permissions (Level 20 - Inherits from User):
+```yaml
+Anchor (Role ID: 5) - CONFIGURED PERMISSIONS:
+  tickets:      [A, S]                    # Approve & assign tickets
+  tasks:        [S]                       # Assign tasks
+
+FINAL ANCHOR PERMISSIONS (After Inheritance):
+  overview:     [R]                       # ← Inherited from User
+  tasks:        [R, E, S]                 # ← [R, E] from User + [S] own = [R, E, S]
+  tickets:      [R, W, E, A, S]           # ← [R, W, E] from User + [A, S] own = [R, W, E, A, S]
+```
+
+#### DepartmentHead Permissions (Level 40 - Inherits from Anchor + User):
+```yaml
+DepartmentHead (Role ID: 4) - CONFIGURED PERMISSIONS:
+  departments:  [R, W, E, D]              # Manage departments
+  users:        [R, W, E]                 # Manage department users
+  reports:      [R, X]                    # View & export reports
+
+FINAL DEPARTMENTHEAD PERMISSIONS (After Inheritance):
+  overview:     [R]                       # ← Inherited from User
+  departments:  [R]              # ← Own permissions
+  users:        [R]                 # ← Own permissions
+  tasks:        [R, E, S]                 # ← Inherited from Anchor (which inherited from User)
+  tickets:      [R, W, E]           # ← Inherited from Anchor (which inherited from User)
+  forms:        [W]                       # ← Inherited from User
+  reports:      [R, X]                    # ← Own permissions
+```
+
+#### BranchManager Permissions (Level 60 - Inherits from DepartmentHead + Anchor + User):
+```yaml
+BranchManager (Role ID: 3) - CONFIGURED PERMISSIONS:
+  branches:     [R, W, E, D]              # Manage branches
+  projects:     [R, W, E]                 # Manage branch projects
+
+FINAL BRANCHMANAGER PERMISSIONS (After Inheritance):
+  overview:     [R]                       # ← Inherited from User
+  branches:     [R]              # ← Own permissions
+  departments:  [R, W, E, D]              # ← Inherited from DepartmentHead
+  users:        [R]                 # ← Inherited from DepartmentHead
+  projects:     [R, W, E]                 # ← Own permissions
+  tasks:        [R, E, S]                 # ← Inherited from Anchor
+  tickets:      [R, W, E]           # ← Inherited from Anchor
+  forms:        [W]                       # ← Inherited from User
+  reports:      [R, X]                    # ← Inherited from DepartmentHead
+```
+
+#### ClientAdmin Permissions (Level 80 - Inherits from all lower roles):
+```yaml
+ClientAdmin (Role ID: 2) - CONFIGURED PERMISSIONS:
+  projects:     [D, X]                    # Delete & export projects (adds to inherited)
+  audit:        [R]                       # View client audit logs
+
+FINAL CLIENTADMIN PERMISSIONS (After Inheritance):
+  overview:     [R]                       # ← Inherited from User
+  branches:     [R]              # ← Inherited from BranchManager
+  departments:  [R, W, E, D]              # ← Inherited from DepartmentHead
+  users:        [R]                 # ← Inherited from DepartmentHead
+  projects:     [R, W, E, D, X]           # ← [R, W, E] from BranchManager + [D, X] own
+  tasks:        [R, E, S]                 # ← Inherited from Anchor
+  tickets:      [R, W, E, A, S]           # ← Inherited from Anchor
+  forms:        [W]                       # ← Inherited from User
+  reports:      [R, X]                    # ← Inherited from DepartmentHead
+  audit:        [R]                       # ← Own permissions
+```
+
+#### SuperAdmin Permissions (Level 100 - ALL ACCESS):
+```yaml
+SuperAdmin (Role ID: 1) - HARDCODED FULL ACCESS:
+  overview:     [R, W, E, D, A, X, S, M]  # ALL
+  clients:      [R, W, E, D, X, M]        # ALL
+  branches:     [R, W, E, D, X, M]        # ALL
+  departments:  [R, W, E, D, X, M]        # ALL
+  users:        [R, W, E, D, M]           # ALL
+  projects:     [R, W, E, D, X, M]        # ALL
+  tasks:        [R, W, E, D, A, X, S, M]  # ALL
+  tickets:      [R, W, E, D, A, X, S, M]  # ALL
+  forms:        [R, W, E, D, X, M]        # ALL
+  reports:      [R, X]                    # ALL
+  audit:        [R, X]                    # ALL
+  settings:     [R, W, E, D, M]           # ALL
+  roles:        [R, W, E, D]              # ALL
+
+Note: SuperAdmin does NOT inherit - it has hardcoded full access
+```
 ---
 
 ## 5. User Scope & Access Levels
@@ -667,7 +707,7 @@ Audit Log Entry Example:
 SuperAdmin (Global)
   └── Creates Clients
        └── ClientAdmin (Client-Level)
-            └── Creates Branches
+            └── View Branches
                  └── BranchManager (Branch-Level)
                       └── Creates Departments
                            └── DepartmentHead (Department-Level)
